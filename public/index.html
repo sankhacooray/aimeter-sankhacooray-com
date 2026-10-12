@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Meter: your Claude usage in the Mac menu bar</title>
+<meta name="description" content="A free, open-source Mac menu bar app that shows your Claude Pro or Max usage: current session, weekly limit and per-model limits, with reset times.">
+<link rel="canonical" href="https://meter.sankhacooray.com/">
+<meta name="theme-color" content="#1f1e1d">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Claude Meter">
+<meta property="og:title" content="Claude Meter: your Claude usage in the Mac menu bar">
+<meta property="og:description" content="Session, weekly and per-model limits at a glance, next to your battery and Wi-Fi. Free and open source.">
+<meta property="og:url" content="https://meter.sankhacooray.com/">
+<meta property="og:image" content="https://meter.sankhacooray.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Claude Meter menu bar dropdown showing session 56%, this week 32% and Fable 12% usage bars">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Claude Meter: your Claude usage in the Mac menu bar">
+<meta name="twitter:description" content="Session, weekly and per-model limits at a glance, next to your battery and Wi-Fi. Free and open source.">
+<meta name="twitter:image" content="https://meter.sankhacooray.com/og.png">
+<meta name="twitter:image:alt" content="Claude Meter menu bar dropdown showing session, weekly and Fable usage bars">
+
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --fg: #1f1e1d;
+    --muted: #6b6560;
+    --line: #e2dbd0;
+    --card: #ffffff;
+    --accent: #d97757;
+    --accent-ink: #ffffff;
+    --bar-track: #e9e4dc;
+    --bar: #3b7ddd;
+    --code-bg: #ebe5db;
+    --desk-a: #2a3b8f;
+    --desk-b: #6a3fa0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1a1918;
+      --fg: #f2ede6;
+      --muted: #a39d95;
+      --line: #33302d;
+      --card: #262422;
+      --accent: #e08a6c;
+      --accent-ink: #1a1918;
+      --bar-track: #3a3734;
+      --bar: #5b95ee;
+      --code-bg: #262422;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1918; --fg: #f2ede6; --muted: #a39d95; --line: #33302d; --card: #262422;
+    --accent: #e08a6c; --accent-ink: #1a1918; --bar-track: #3a3734; --bar: #5b95ee; --code-bg: #262422;
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.5 Inter, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+  main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(32px, 6vw, 96px);
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 24px 32px 8px;
+  }
+  main > * { min-width: 0; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .eyebrow img { width: 22px; height: 22px; border-radius: 5px; }
+  h1 {
+    font-size: clamp(32px, min(4.2vw, 6.4vh), 54px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+  h1 em { font-style: normal; color: var(--accent); }
+  .lede { margin-top: 14px; font-size: 17px; color: var(--muted); max-width: 30em; }
+
+  .points { list-style: none; padding: 0; margin-top: 16px; display: grid; gap: 6px; font-size: 15px; }
+  .points li { display: flex; gap: 10px; align-items: baseline; }
+  .points li::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); transform: translateY(-2px); }
+
+  .cta { margin-top: 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; }
+  .download {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--fg); color: var(--bg);
+    padding: 13px 22px; border-radius: 12px;
+    font-weight: 600; font-size: 16px; text-decoration: none;
+    transition: background-color .15s, box-shadow .15s;
+  }
+  .download:hover { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .download svg { width: 18px; height: 18px; }
+  .meta { font-size: 13px; color: var(--muted); }
+
+  .terminal {
+    margin-top: 14px; max-width: 34em;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--code-bg); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 8px 8px 14px;
+  }
+  .terminal code {
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font: 12.5px/1.4 "JetBrains Mono", ui-monospace, monospace;
+  }
+  .terminal button {
+    flex: none; border: 1px solid var(--line); background: var(--card); color: var(--fg);
+    font: 500 12px Inter, sans-serif; padding: 5px 10px; border-radius: 7px; cursor: pointer;
+  }
+  .terminal button:hover { border-color: var(--muted); }
+  .hint { margin-top: 8px; font-size: 13px; color: var(--muted); max-width: 34em; }
+  .hint b { color: var(--fg); font-weight: 500; }
+
+  /* Product glimpse: a slice of the macOS menu bar with the dropdown open */
+  .stage {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--desk-a), var(--desk-b));
+    padding: 0 0 28px;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,.45);
+  }
+  .menubar {
+    display: flex; justify-content: flex-end; align-items: center; gap: 16px;
+    height: 30px; padding: 0 14px;
+    background: rgba(0,0,0,.18); backdrop-filter: blur(10px);
+    color: #fff; font-size: 13px; font-weight: 500;
+  }
+  .menubar .item { display: inline-flex; align-items: center; gap: 4px; opacity: .92; }
+  .menubar .meter { background: rgba(255,255,255,.22); padding: 2px 7px; border-radius: 6px; opacity: 1; }
+  .menubar svg { display: block; }
+  .panel {
+    width: min(330px, calc(100% - 32px));
+    margin: 8px 0 0 auto; margin-right: clamp(16px, 24%, 120px);
+    background: rgba(38,36,34,.88); backdrop-filter: blur(24px);
+    color: #f2ede6;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px; padding: 16px;
+    font-size: 13px;
+    box-shadow: 0 20px 40px -12px rgba(0,0,0,.5);
+  }
+  .panel-head { display: flex; align-items: baseline; gap: 6px; margin-bottom: 12px; }
+  .panel-head strong { font-size: 14px; }
+  .panel-head span { color: #a39d95; font-size: 11px; }
+  .panel-head .icons { margin-left: auto; display: flex; gap: 10px; color: #c9c2b8; }
+  .row + .row { margin-top: 13px; }
+  .row-top { display: flex; justify-content: space-between; font-weight: 500; }
+  .row-top span { color: #a39d95; font-weight: 400; font-variant-numeric: tabular-nums; }
+  .track { height: 6px; border-radius: 3px; background: #3a3734; margin: 7px 0 5px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 3px; background: #5b95ee; }
+  .row small { color: #a39d95; font-size: 11px; }
+
+  footer {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px;
+    padding: 14px 16px 18px; font-size: 12.5px; color: var(--muted);
+  }
+  footer a { color: inherit; }
+  footer a:hover { color: var(--fg); }
+
+  @media (max-width: 860px) {
+    main { grid-template-columns: 1fr; padding: 20px 16px 8px; gap: 24px; align-content: start; }
+    h1 { font-size: 34px; }
+    .stage { order: -1; }
+    .panel { margin-right: 16px; }
+  }
+  /* Desktop: everything fits one screen */
+  @media (min-width: 861px) and (min-height: 640px) {
+    body { height: 100dvh; overflow: hidden; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <section>
+    <div class="eyebrow"><img src="icon.svg" alt="">Claude Meter · free for macOS</div>
+    <h1>Your Claude usage,<br><em>next&nbsp;to your battery.</em></h1>
+    <p class="lede">A tiny menu bar app that shows how much of your Claude plan you've used, so you don't have to open Settings → Usage.</p>
+    <ul class="points">
+      <li>Session, weekly and per-model limits, with reset countdowns</li>
+      <li>Uses your own Claude Code login; only talks to Anthropic</li>
+      <li>Free and open source, about 450 lines of Swift</li>
+    </ul>
+
+    <div class="cta">
+      <a class="download" href="https://github.com/bsc2fast/claude-meter-macos/releases/latest/download/ClaudeMeter.zip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0 4.5-4.5M12 15l-4.5-4.5M5 19h14"/></svg>
+        Download for Mac
+      </a>
+      <span class="meta">v1.0 · macOS 14+ · Apple silicon &amp; Intel</span>
+    </div>
+
+    <div class="terminal">
+      <code id="cmd">curl -fsSL https://raw.githubusercontent.com/bsc2fast/claude-meter-macos/main/scripts/install.sh | sh</code>
+      <button type="button" id="copy">Copy</button>
+    </div>
+    <p class="hint">Or paste this in Terminal. Needs <b>Claude Code</b> signed in to a Pro or Max plan. If macOS blocks the download, use <b>System Settings → Privacy &amp; Security → Open Anyway</b>.</p>
+  </section>
+
+  <figure class="stage" aria-label="Claude Meter open in the macOS menu bar">
+    <div class="menubar">
+      <span class="item meter">
+        <svg width="16" height="14" viewBox="0 0 16 14"><rect x=".5" y=".5" width="15" height="5" rx="1.5" fill="none" stroke="#fff"/><rect x="1.5" y="1.5" width="7.5" height="3" rx=".75" fill="#fff"/><rect x=".5" y="8" width="15" height="5" rx="1.5" fill="none" stroke="#fff"/><rect x="1.5" y="9" width="4.3" height="3" rx=".75" fill="#fff"/></svg>
+        56%
+      </span>
+      <span class="item">
+        <svg width="24" height="12" viewBox="0 0 24 12"><rect x=".5" y=".5" width="20" height="11" rx="3" fill="none" stroke="#fff" opacity=".6"/><rect x="2" y="2" width="9" height="8" rx="1.5" fill="#fff"/><rect x="21.5" y="4" width="1.5" height="4" rx=".7" fill="#fff" opacity=".6"/></svg>
+      </span>
+      <span class="item">
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="#fff"><path d="M8 11.5 5.6 9a3.4 3.4 0 0 1 4.8 0zM3.5 6.9a6.4 6.4 0 0 1 9 0l-1.4 1.4a4.4 4.4 0 0 0-6.2 0zM1.3 4.7a9.5 9.5 0 0 1 13.4 0l-1.4 1.4a7.5 7.5 0 0 0-10.6 0z"/></svg>
+      </span>
+      <span class="item">Mon 7:05 PM</span>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <strong>Claude usage</strong><span>7:05 PM</span>
+        <span class="icons">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M4.9 4.9l2.1 2.1m10 10 2.1 2.1M2 12h3m14 0h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+        </span>
+      </div>
+      <div class="row">
+        <div class="row-top">Current session <span>56% used</span></div>
+        <div class="track"><div class="fill" style="width:56%"></div></div>
+        <small>Resets at 7:30 PM (in 25m)</small>
+      </div>
+      <div class="row">
+        <div class="row-top">This week <span>32% used</span></div>
+        <div class="track"><div class="fill" style="width:32%"></div></div>
+        <small>Resets Wednesday 7:00 PM (in 1d 23h)</small>
+      </div>
+      <div class="row">
+        <div class="row-top">Fable this week <span>12% used</span></div>
+        <div class="track"><div class="fill" style="width:12%"></div></div>
+        <small>Resets Wednesday 7:00 PM (in 1d 23h)</small>
+      </div>
+    </div>
+  </figure>
+</main>
+
+<footer>
+  <a href="https://github.com/bsc2fast/claude-meter-macos">Source on GitHub</a>
+  <span>Unofficial. Not affiliated with Anthropic.</span>
+  <span>Made by <a href="https://sankhacooray.com">Sankha Cooray</a></span>
+</footer>
+
+<script>
+  document.getElementById('copy').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    try {
+      await navigator.clipboard.writeText(document.getElementById('cmd').textContent);
+      btn.textContent = 'Copied';
+    } catch {
+      btn.textContent = 'Select & copy';
+    }
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1600);
+  });
+</script>
+</body>
+</html>
