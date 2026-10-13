@@ -1,10 +1,10 @@
-# meter
+# aimeter
 
 One-screen download page for **Claude Meter**, the macOS menu bar app that shows Claude plan
 usage. App source: [bsc2fast/claude-meter-macos](https://github.com/bsc2fast/claude-meter-macos).
 
-Target URL: **meter.sankhacooray.com**, served by a Cloudflare Worker (static assets only),
-the same setup as `cook`.
+Target URL: **aimeter.sankhacooray.com**, served by a Cloudflare Worker (static assets only),
+the same setup as `cook`. Repo: `aimeter-sankhacooray-com`.
 
 ## Files
 
